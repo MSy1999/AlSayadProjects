@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.22)
+include(${CMAKE_CURRENT_LIST_DIR}/libs/AlSayadLib/AlSayadLib.cmake)
+set(COMPONENTS main)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(MeasurementESP)

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="900" viewBox="0 0 1280 900" role="img" aria-label="MeasurementESP / wiring overview">
+<style>text{font-family:Arial,sans-serif;fill:#E6EDF3}.title{font-size:30px;font-weight:bold}.sub{font-size:18px;fill:#A0AEC0}.label{font-size:21px}.small{font-size:17px}.box{fill:#16232D;stroke:#24333E;stroke-width:2}.wire{fill:none;stroke-width:4;stroke-linejoin:round}</style>
+<rect width="1280" height="900" fill="#0B1118"/>
+<text x="44" y="55" class="title">MeasurementESP / wiring overview</text><text x="44" y="90" class="sub">Logical connections by pin NAME; connector positions are not physical pin order.</text>
+<rect x="70" y="220" width="340" height="430" rx="12" class="box"/>
+<text x="95" y="260" class="label">ESP32-DevKitC V4</text>
+<text x="95" y="292" class="sub">ESP32-WROOM-32E</text>
+<text x="95" y="350" class="label">3V3</text>
+<text x="95" y="410" class="label">GND</text>
+<text x="95" y="480" class="label">IO27 / DHT data</text>
+<text x="95" y="570" class="label">IO34 / ADC1_CH6</text>
+<text x="95" y="620" class="small">USB power to this board</text>
+<rect x="840" y="145" width="365" height="235" rx="12" class="box"/>
+<text x="862" y="185" class="label">KY-015 / DHT11</text>
+<text x="880" y="235" class="label">+ / VCC (3.3 V)</text>
+<text x="880" y="290" class="label">S / DATA</text>
+<text x="880" y="345" class="label">- / GND</text>
+<rect x="840" y="475" width="365" height="235" rx="12" class="box"/>
+<text x="862" y="515" class="label">KY-018 / light module</text>
+<text x="880" y="565" class="label">+ / VCC (3.3 V)</text>
+<text x="880" y="620" class="label">- / GND</text>
+<text x="880" y="675" class="label">S / analog output</text>
+<polyline points="410,344 490,344 490,230 840,230" class="wire" stroke="#FF716D"/>
+<polyline points="490,344 490,560 840,560" class="wire" stroke="#FF716D"/>
+<polyline points="410,404 540,404 540,340 840,340" class="wire" stroke="#A0AEC0"/>
+<polyline points="540,404 540,615 840,615" class="wire" stroke="#A0AEC0"/>
+<polyline points="410,474 650,474 650,285 840,285" class="wire" stroke="#00C2FF"/>
+<polyline points="720,230 720,242" class="wire" stroke="#FF716D"/>
+<rect x="705" y="242" width="30" height="28" fill="#111B24" stroke="#00C2FF" stroke-width="3"/>
+<polyline points="720,270 720,285" class="wire" stroke="#00C2FF"/>
+<circle cx="720" cy="230" r="6" fill="#FF716D"/>
+<circle cx="720" cy="285" r="6" fill="#00C2FF"/>
+<text x="580" y="212" class="small">R3 10k REQUIRED</text>
+<polyline points="840,670 730,670 730,785 410,785 410,564" class="wire" stroke="#F4B740"/>
+<rect x="445" y="747" width="245" height="64" rx="12" class="box"/>
+<text x="462" y="773" class="small">10k / 10k divider</text>
+<text x="462" y="797" class="small">C1 optional (detail 02)</text>
+<text x="70" y="148" class="small">01 / Supply both modules from 3V3; all grounds join at the sender.</text>
+<text x="70" y="184" class="small">Your DHT module has no pull-up: fit R3 between 3V3 and DATA as drawn.</text>
+<circle cx="490" cy="344" r="6" fill="#FF716D"/>
+<circle cx="540" cy="404" r="6" fill="#A0AEC0"/>
+<text x="70" y="827" class="small">Dots join wires; crossings without a dot are not connected.</text>
+<text x="70" y="855" class="small">Wi-Fi only to SmartDisplay; no signal/power wire between the two ESP boards.</text>
+</svg>

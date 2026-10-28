@@ -1,0 +1,37 @@
+menu "AlSayad Room Monitor"
+    config AS_ROOM_AP_SSID
+        string "Display Wi-Fi AP name"
+        default "AlSayad-Room"
+    config AS_ROOM_AP_PASSWORD
+        string "Display Wi-Fi AP password (8..63 bytes)"
+        default "AlSayadRoom"
+    config AS_ROOM_DEVICE_ID
+        string "Accepted measurement device identifier (1..32 bytes)"
+        default "measurement-01"
+    config AS_ROOM_SD_ENABLED
+        bool "Probe SD storage (requires non-conflicting hardware allocation)"
+        default y
+        help
+            Current CYD LCD/touch reserves SPI2 and SPI3. This is reported as
+            unsupported and uses RAM history; no live bus is remapped.
+    config AS_ROOM_SD_HOST
+        int "SD SPI host number"
+        range 1 2
+        default 2
+    config AS_ROOM_SD_MOSI
+        int "SD MOSI GPIO"
+        default 23
+    config AS_ROOM_SD_MISO
+        int "SD MISO GPIO"
+        default 19
+    config AS_ROOM_SD_SCLK
+        int "SD SCLK GPIO"
+        default 18
+    config AS_ROOM_SD_CS
+        int "SD CS GPIO"
+        default 5
+    config AS_ROOM_SD_BUDGET_MIB
+        int "SD history recording budget (MiB)"
+        range 1 1024
+        default 32
+endmenu

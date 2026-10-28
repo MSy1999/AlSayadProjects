@@ -1,0 +1,70 @@
+menu "MeasurementESP sender"
+config AS_SENDER_WIFI_SSID
+    string "Display Wi-Fi SSID"
+    default "AlSayad-Room"
+config AS_SENDER_WIFI_PASSWORD
+    string "Display WPA2 password (8-63 bytes)"
+    default "AlSayadRoom"
+config AS_SENDER_DEVICE_ID
+    string "Protocol device ID (1-32 bytes)"
+    default "measurement-01"
+config AS_SENDER_URL
+    string "Display HTTP endpoint"
+    default "http://192.168.4.1/api/v1/measurements"
+config AS_SENDER_PERIOD_MS
+    int "Sampling interval (ms)"
+    range 100 60000
+    default 2000
+config AS_SENDER_HTTP_TIMEOUT_MS
+    int "HTTP socket timeout (ms)"
+    range 100 30000
+    default 3000
+config AS_SENDER_SIMULATED
+    bool "Generate explicitly marked synthetic test readings"
+    default n
+    help
+        Generates 23.4 C, 56.7 percent humidity and zero percent brightness.
+        Every frame carries simulated=true. Disabled means unconfigured sensors
+        report unavailable; it never substitutes synthetic values automatically.
+menu "DevKitC V4 sensor hardware"
+    depends on IDF_TARGET_ESP32
+config AS_SENDER_DHT_ENABLED
+    bool "KY-015 / DHT11 on GPIO27"
+    default y
+    help
+        Requires 3.3 V supply and DATA pull-up to 3.3 V.
+        Physical transactions are spaced by at least two seconds.
+config AS_SENDER_DHT_GPIO_CAPTURE
+    bool "Use GPIO timing capture instead of RMT for DHT11"
+    depends on AS_SENDER_DHT_ENABLED
+    default y
+    help
+        Use this to diagnose RMT receive-completion timeouts. Captures one fresh
+        DHT transaction; masks interrupts on the acquisition core for at most
+        8 ms. Disable to compare with the original RMT backend.
+config AS_SENDER_LIGHT_ENABLED
+    bool "KY-018 on GPIO34 / ADC1 channel 6"
+    default y
+    help
+        Requires the documented external 10k/10k divider.
+        The 100nF ADC-to-ground capacitor is optional noise filtering.
+        Uncalibrated light reports unavailable while logging raw ADC averages.
+config AS_SENDER_LIGHT_CALIBRATED
+    bool "Enable measured dark/bright calibration"
+    depends on AS_SENDER_LIGHT_ENABLED
+    default n
+    help
+        Enable only after measuring endpoints on the complete assembled circuit.
+        The defaults below are placeholders and are not measured calibration.
+config AS_SENDER_LIGHT_DARK_RAW
+    int "Measured dark raw ADC endpoint"
+    depends on AS_SENDER_LIGHT_CALIBRATED
+    range 0 4095
+    default 0
+config AS_SENDER_LIGHT_BRIGHT_RAW
+    int "Measured bright raw ADC endpoint"
+    depends on AS_SENDER_LIGHT_CALIBRATED
+    range 0 4095
+    default 4095
+endmenu
+endmenu

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="870" viewBox="0 0 1280 870" role="img" aria-label="MeasurementESP / circuit details">
+<style>text{font-family:Arial,sans-serif;fill:#E6EDF3}.title{font-size:30px;font-weight:bold}.sub{font-size:18px;fill:#A0AEC0}.label{font-size:21px}.small{font-size:17px}.box{fill:#16232D;stroke:#24333E;stroke-width:2}.wire{fill:none;stroke-width:4;stroke-linejoin:round}</style>
+<rect width="1280" height="870" fill="#0B1118"/>
+<text x="44" y="55" class="title">MeasurementESP / circuit details</text><text x="44" y="90" class="sub">02 / Added components are outside the sensor modules. All grounds are common.</text>
+<text x="60" y="150" class="label">A. KY-018 output conditioning</text>
+<text x="60" y="203" class="small">KY-018 S</text>
+<polyline points="65,240 250,240" class="wire" stroke="#F4B740"/>
+<rect x="250" y="225" width="115" height="30" fill="#111B24" stroke="#F4B740" stroke-width="3"/>
+<text x="265" y="209" class="small">R1 10k</text>
+<polyline points="365,240 1040,240" class="wire" stroke="#F4B740"/>
+<text x="925" y="211" class="label">GPIO34</text>
+<circle cx="530" cy="240" r="6" fill="#F4B740"/>
+<circle cx="750" cy="240" r="6" fill="#F4B740"/>
+<polyline points="530,240 530,305" class="wire" stroke="#F4B740"/>
+<rect x="515" y="305" width="30" height="100" fill="#111B24" stroke="#F4B740" stroke-width="3"/>
+<text x="563" y="360" class="small">R2 10k</text>
+<polyline points="530,405 530,465" class="wire" stroke="#A0AEC0"/>
+<polyline points="750,240 750,333" class="wire" stroke="#F4B740"/>
+<polyline points="718,333 782,333" class="wire" stroke="#00C2FF"/>
+<polyline points="718,351 782,351" class="wire" stroke="#00C2FF"/>
+<polyline points="750,351 750,465" class="wire" stroke="#A0AEC0"/>
+<text x="800" y="352" class="small">C1 100 nF (optional)</text>
+<polyline points="425,465 880,465" class="wire" stroke="#A0AEC0"/>
+<text x="890" y="471" class="small">GND</text>
+<text x="60" y="510" class="small">V(GPIO34) = V(S) / 2, at most 1.65 V with a 3.3 V module supply.</text>
+<text x="60" y="540" class="small">The divider loads the module. Calibrate dark/bright with this complete circuit attached.</text>
+<text x="60" y="605" class="label">B. KY-015 DATA pull-up (required for your module)</text>
+<text x="60" y="680" class="label">3V3</text>
+<polyline points="135,675 270,675" class="wire" stroke="#FF716D"/>
+<rect x="270" y="660" width="115" height="30" fill="#111B24" stroke="#00C2FF" stroke-width="3"/>
+<text x="281" y="644" class="small">R3 10k</text>
+<polyline points="385,675 680,675 680,755" class="wire" stroke="#00C2FF"/>
+<polyline points="270,755 1040,755" class="wire" stroke="#00C2FF"/>
+<circle cx="680" cy="755" r="6" fill="#00C2FF"/>
+<text x="60" y="762" class="label">GPIO27</text>
+<text x="1055" y="762" class="label">DHT S</text>
+<text x="60" y="824" class="small">Use module markings and manufacturer pinout images; do not infer pin order from photographs.</text>
+</svg>
