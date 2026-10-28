@@ -17,11 +17,11 @@ command = [str(args.zig.resolve()), 'cc', '-std=c11', '-Wall', '-Wextra', '-Werr
 command += ['-I' + str(root / module) for module in modules]
 command += [str(project / 'tests/AsSenderTests.c'), str(project / 'tests/AsHttpTests.c')]
 command += [str(root / module / (module + '.c')) for module in modules]
-command += ['-I' + str(root / 'AsDht11'), str(root / 'AsDht11/AsDht11Decode.c')]
+command += ['-I' + str(root / 'sensors/DHT11'), str(root / 'sensors/DHT11/AsDht11Decode.c')]
 command += [str(project / 'tests/AsDht11Tests.c'), str(project / 'tests/AsHardwareTests.c')]
-command += ['-I' + str(root / 'AsAnalogLight'), '-I' + str(root / 'TimeManager'),
-            '-I' + str(project / 'main'), str(root / 'AsDht11/AsDht11.c'),
-            str(root / 'AsAnalogLight/AsAnalogLight.c'),
+command += ['-I' + str(root / 'sensors/Light'), '-I' + str(root / 'TimeManager'),
+            '-I' + str(project / 'main'), str(root / 'sensors/DHT11/AsDht11.c'),
+            str(root / 'sensors/Light/AsAnalogLight.c'),
             str(project / 'main/AsMeasurementBoardConfig.c')]
 command += [str(cjson / 'cJSON.c'), '-o', str(output)]
 for gpio_capture in (False, True):

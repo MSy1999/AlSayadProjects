@@ -23,6 +23,7 @@ static uint32_t u32Transactions;
 static uint32_t u32Queues;
 static uint32_t u32Channels;
 static uint32_t u32Units;
+static uint32_t u32AdcReads;
 static bool bRmtTimeout;
 static bool bBadChecksum;
 static bool bRmtInitFailure;
@@ -199,6 +200,7 @@ esp_err_t adc_oneshot_config_channel(adc_oneshot_unit_handle_t unit, adc_channel
 }
 esp_err_t adc_oneshot_read(adc_oneshot_unit_handle_t unit, adc_channel_t channel, int* raw) {
     assert(unit != NULL && channel == 6);
+    ++u32AdcReads;
     *raw = adc_raw;
     u64NowUs += 50;
     return bAdcReadFailure ? ESP_ERR_TIMEOUT : ESP_OK;
@@ -249,7 +251,15 @@ void as_test_hardware(void) {
     bGpioFixture = true;
     AsDht11 st_GpioDht = {0};
     u64NowUs += 2000000;
-    assert(as_dht11_init_gpio(&st_GpioDht, 27) == ESP_OK);
+    AsDht11Config st_DhtConfig = AS_DHT11_CONFIG_DEFAULT(27);
+    assert(as_dht11_init_config(&st_GpioDht, NULL) == ESP_ERR_INVALID_ARG);
+    st_DhtConfig.eCapture = (AsDht11Capture)99;
+    assert(as_dht11_init_config(&st_GpioDht, &st_DhtConfig) == ESP_ERR_INVALID_ARG);
+    st_DhtConfig.eCapture = AS_DHT11_CAPTURE_GPIO;
+    assert(as_dht11_init_config(&st_GpioDht, &st_DhtConfig) == ESP_OK);
+    assert(as_dht11_init_config(&st_GpioDht, &st_DhtConfig) == ESP_OK);
+    st_DhtConfig.eCapture = AS_DHT11_CAPTURE_RMT;
+    assert(as_dht11_init_config(&st_GpioDht, &st_DhtConfig) == ESP_ERR_INVALID_STATE);
     assert(u32Queues == 0 && u32Channels == 0);
     assert(as_dht11_read(&st_GpioDht, 100, &f32Temperature, &f32Humidity) == ESP_OK);
     assert(f32Temperature == 23 && f32Humidity == 55);
@@ -266,7 +276,12 @@ void as_test_hardware(void) {
     u64NowUs += 2000000;
     assert(as_dht11_read(&st_GpioDht, 100, &f32Temperature, &f32Humidity) == ESP_OK);
     assert(f32Temperature == 23 && f32Humidity == 55);
-    /* Missing the response HIGH must still fail rather than accepting data as preamble. */
+    /* Capture beginning at response HIGH retains all forty bits and trailing LOW. */
+    u32GpioReleaseObservationDelayUs = 110;
+    u64NowUs += 2000000;
+    assert(as_dht11_read(&st_GpioDht, 100, &f32Temperature, &f32Humidity) == ESP_OK);
+    assert(f32Temperature == 23 && f32Humidity == 55);
+    /* Missing most of response HIGH must still fail. */
     u32GpioReleaseObservationDelayUs = 180;
     u64NowUs += 2000000;
     f32Temperature = -123;
@@ -309,20 +324,64 @@ void as_test_hardware(void) {
     assert(as_analog_light_read(&st_Light, 100, &f32Raw) != ESP_OK);
     adc_raw = 2000;
     assert(as_analog_light_deinit(&st_Light) == ESP_OK && u32Units == 0);
+    /* Standalone configuration controls actual averaging and settling behavior. */
+    AsAnalogLightConfig st_LightConfig = AS_ANALOG_LIGHT_CONFIG_DEFAULT(34);
+    assert(as_analog_light_init_config(&st_Light, NULL) == ESP_ERR_INVALID_ARG);
+    st_LightConfig.u16SampleCount = 0;
+    assert(as_analog_light_init_config(&st_Light, &st_LightConfig) == ESP_ERR_INVALID_ARG);
+    st_LightConfig.u16SampleCount = 17;
+    assert(as_analog_light_init_config(&st_Light, &st_LightConfig) == ESP_ERR_INVALID_ARG);
+    st_LightConfig.u16SampleCount = 4;
+    st_LightConfig.u16SettleMs = 101;
+    assert(as_analog_light_init_config(&st_Light, &st_LightConfig) == ESP_ERR_INVALID_ARG);
+    assert(u32Units == 0);
+    st_LightConfig.u16SettleMs = 0;
+    assert(as_analog_light_init_config(&st_Light, &st_LightConfig) == ESP_OK);
+    assert(as_analog_light_init_config(&st_Light, &st_LightConfig) == ESP_OK);
+    u32Before = u32AdcReads;
+    u64StartedUs = u64NowUs;
+    assert(as_analog_light_read(&st_Light, 100, &f32Raw) == ESP_OK && f32Raw == 2000);
+    assert(u32AdcReads == u32Before + 4 && u64NowUs - u64StartedUs == 200);
+    st_LightConfig.u16SettleMs = 100;
+    assert(as_analog_light_init_config(&st_Light, &st_LightConfig) == ESP_ERR_INVALID_STATE);
+    assert(as_analog_light_deinit(&st_Light) == ESP_OK && u32Units == 0);
+    assert(as_analog_light_init_config(&st_Light, &st_LightConfig) == ESP_OK);
+    u64StartedUs = u64NowUs;
+    u32Before = u32AdcReads;
+    f32Raw = -123;
+    assert(as_analog_light_read(&st_Light, 10, &f32Raw) == ESP_ERR_TIMEOUT);
+    assert(f32Raw == -123 && u32AdcReads == u32Before && u64NowUs - u64StartedUs < 20000);
+    assert(as_analog_light_deinit(&st_Light) == ESP_OK && u32Units == 0);
     /* Exercise actual board registration and shared snapshot service together. */
 #ifdef CONFIG_AS_SENDER_DHT_GPIO_CAPTURE
     bGpioFixture = true;
 #endif
     AsMeasurementSensor ast_Sensors[AS_METRIC_COUNT];
     AsMeasurement st_Frame;
-    as_measurement_board_configure(ast_Sensors);
+    AsMeasurementBoardConfig st_BoardConfig = {
+        .st_Dht = AS_DHT11_CONFIG_DEFAULT(27),
+        .st_Light = AS_ANALOG_LIGHT_CONFIG_DEFAULT(34),
+        .u32DhtTimeoutMs = 100,
+        .u32LightTimeoutMs = 100
+    };
+#ifndef CONFIG_AS_SENDER_DHT_GPIO_CAPTURE
+    st_BoardConfig.st_Dht.eCapture = AS_DHT11_CAPTURE_RMT;
+#endif
+    st_BoardConfig.st_Light.u16SampleCount = 8;
+    assert(as_measurement_board_configure(ast_Sensors, NULL) == ESP_ERR_INVALID_ARG);
+    st_BoardConfig.u32DhtTimeoutMs = 1;
+    assert(as_measurement_board_configure(ast_Sensors, &st_BoardConfig) == ESP_ERR_INVALID_ARG);
+    st_BoardConfig.u32DhtTimeoutMs = 100;
+    assert(as_measurement_board_configure(ast_Sensors, &st_BoardConfig) == ESP_OK);
     assert(as_measurement_board_config_valid() && as_measurement_board_startup_ms() == 2000);
     for (size_t sample = 0; sample < 3; ++sample) {
         u64NowUs += 2000000;
         u32Before = u32Starts;
+        uint32_t u32AdcBefore = u32AdcReads;
         as_measurement_board_begin_sample();
         assert(as_measurement_sensors_sample(ast_Sensors, "test", false, u64NowUs / 1000, &st_Frame) == ESP_OK);
         assert(u32Starts == u32Before + 1);
+        assert(u32AdcReads == u32AdcBefore + 8);
         assert(st_Frame.ast_Readings[0].eStatus == AS_READING_VALID);
         assert(st_Frame.ast_Readings[1].eStatus == AS_READING_VALID);
 #ifdef AS_TEST_CALIBRATED

@@ -112,3 +112,30 @@ first LOW only. The complete response HIGH, 40 bits, checksum and sensor range
 checks remain. New startup marker: `edge-sync=2`. Host cases pass, but physical
 success after flashing is still pending. The user's KY-018 raw readings remain
 zero; flashlight/known-divider-input diagnostics are still pending, without a meter.
+
+
+## Valid readings with intermittent HIGH-first captures
+
+The latest user log confirms repeated DHT bytes 30/00/19/08/51 (48.0 %RH,
+25.8 C), followed by 31/00/19/08/52 (49.0 %RH, 25.8 C), with valid checksums.
+HTTP 202 continues; logged ADC averages are now nonzero (approximately 2532..2740
+in this excerpt). HTTP logs report T/H/L=valid on successful samples. Raw ADC
+activity alone does not establish light calibration accuracy.
+
+Intermittent failures have exactly 82 pulses: response HIGH 89 us, all forty
+LOW/HIGH data pairs, then trailing LOW. The preceding response LOW was not
+captured. The decoder previously required that LOW. The exact 27598 ms failing
+frame now passes a host regression and decodes 48.0 %RH / 25.8 C. Added narrow
+HIGH-first frame support and a real GPIO-driver simulation beginning at response
+HIGH. All bit timing, checksum, encoding and range checks remain required.
+Physical confirmation of this correction after flashing remains pending.
+
+
+## User confirms working sensors
+
+After the HIGH-first decoder correction and quieter logging, the user reports
+that both sensors work correctly. This is user-reported functional confirmation;
+no independent accuracy/reference measurements were supplied. The subsequent
+move to AlSayadLib/ESP32/sensors retains the same default GPIO capture, light
+averaging and settling behavior. Physical confirmation after that refactor is
+pending; the agent has not flashed the board.

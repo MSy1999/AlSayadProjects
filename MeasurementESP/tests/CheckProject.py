@@ -9,7 +9,7 @@ args = parser.parse_args()
 project = Path(__file__).resolve().parents[1]
 root = args.library_root.resolve()
 modules = ['AsMeasurements', 'AsMeasurementJson', 'AsMeasurementSensors',
-           'AsMeasurementSender', 'AsWifiStation', 'AsMeasurementHttp', 'AsDht11', 'AsAnalogLight', 'TimeManager']
+           'AsMeasurementSender', 'AsWifiStation', 'AsMeasurementHttp', 'DHT11', 'Light', 'TimeManager']
 description = json.loads((project / 'build/project_description.json').read_text())
 components = description['build_components']
 for module in modules:
@@ -20,7 +20,8 @@ for module in ['as_display', 'AsHistoryStorage', 'AsSdHistory', 'AsWifiTransport
 commands = json.loads((project / 'build/compile_commands.json').read_text())
 sources = list((project / 'main').glob('*.c'))
 for module in modules:
-    sources += list((root / module).glob('*.c'))
+    directory = {'DHT11': 'sensors/DHT11', 'Light': 'sensors/Light'}.get(module, module)
+    sources += list((root / directory).glob('*.c'))
 for source in sources:
     matched = [entry for entry in commands if Path(entry['file']).resolve() == source.resolve()]
     assert len(matched) == 1, source

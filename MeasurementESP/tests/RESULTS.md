@@ -3,9 +3,28 @@
 Run date: 2026-10-28. SDK, dependency and tool versions are recorded in README.md.
 These are software checks, not physical acceptance evidence.
 
+## Intermittent DHT11 timeout follow-up
+
+The user's log at 68637 ms reports `raw=unavailable stage=insufficient_budget`,
+then `ESP_ERR_TIMEOUT` for both readings. Reads immediately before and after it
+decode with valid checksums (25.8 C, 49.0 percent RH). This particular timeout
+occurs before physical acquisition: waiting for the driver's two-second minimum
+leaves less than its reserved 40 ms within the board's 100 ms read timeout.
+Successful capture timestamps advance by about 2010 ms against a 2000 ms sampling
+schedule, consistent with tick-rounded waits accumulating until that guard fires.
+
+Changed the active configuration, defaults and Kconfig default to 2500 ms so
+normal scheduling jitter has 500 ms of margin above the physical minimum.
+The error counters are cumulative, so a nonzero `sensor errors T/H/L` line does
+not mean the current readings failed. A flashed-board soak check is still needed
+to confirm the intermittent timeout is gone.
+
+Verification: ESP-IDF build and project source/component checks pass. Generated
+configuration confirms period=2500 ms and light calibration remains 4095 / 12.
+
 | Check | Result |
 | --- | --- |
-| MeasurementESP ESP-IDF 6.1.0 build, target esp32 | PASS; `build/MeasurementESP.bin`, 0xe3cf0 bytes (933104), 11% app partition free; GPIO edge-sync=2, raw input logging, light calibrated at dark=4095 / bright=12 |
+| MeasurementESP ESP-IDF 6.1.0 build, target esp32 | PASS; `build/MeasurementESP.bin`, 0xe3d00 bytes (933120), 11% app partition free; period=2500 ms, GPIO edge-sync=2, raw input logging, light calibrated at dark=4095 / bright=12 |
 | SmartDisplay compatibility firmware rebuild | PASS; existing receiver sources/AP/server API unchanged |
 | Sender native C11 checks (`-Wall -Wextra -Werror`) | PASS |
 | Existing SmartDisplay core/transport host checks | PASS; rerun after hardware integration |
@@ -185,3 +204,60 @@ checks pass. Verified the installed monitor LineMatcher accepts AsRawInputs and
 rejects MeasurementESP with `AsRawInputs:I *:N`. README documents filtering and
 PowerShell Tee-Object capture to a separate raw-inputs.log file. No physical raw
 readings were obtained by the agent; sample logs in explanations are format examples.
+
+
+## HIGH-first board capture regression
+
+Reproduced the latest response_preamble failure using the exact 82 pulses from
+user log timestamp 27598 ms; the existing decoder rejected the fixture. Added
+support only for exactly 82 pulses consisting of a 60..100 us initial HIGH,
+forty complete LOW/HIGH pairs and a 35..75 us trailing LOW. No data bits are
+skipped and all existing validation remains. This frame decodes bytes
+30/00/19/08/51, 48.0 %RH and 25.8 C.
+
+PASS: all four native GPIO/RMT x calibrated/uncalibrated configurations, including
+exact-board-waveform decoding, GPIO capture beginning at response HIGH, truncated
+frame rejection, short initial HIGH, invalid trailing level, ambiguous bit timing,
+checksum corruption and unchanged outputs on failure. ESP-IDF firmware build and
+resolved component/C11 checks pass. This is a shared-library decoder change under
+D:/GitHub/AlSayad/AlSayadLib/ESP32/AsDht11. No board was flashed by the agent;
+physical confirmation of the correction is pending.
+
+
+## Reusable sensor directory and configuration API
+
+Moved the existing sensor sources into AlSayadLib/ESP32/sensors/DHT11 and
+sensors/Light, registered as the DHT11 and Light ESP-IDF components. Updated
+MeasurementESP registration, board initialization and host/project-check paths.
+The public headers retain existing names and pin-only APIs; new init_config
+functions accept explicit sensor config structs. Defaults preserve GPIO27 GPIO
+capture, GPIO34 ADC1, 16 samples and 5 ms settling in MeasurementESP.
+
+DHT11 config selects GPIO and capture backend. Light config selects GPIO,
+1..16 averaging samples and 0..100 ms settling. Reinitializing with different
+configuration requires deinit. Both components now use esp_timer directly and
+depend only on ESP-IDF, with no TimeManager or measurement-framework dependency.
+Raw light calibration and paired measurement coordination remain in the app.
+Usage and integration examples live in the shared sensors/README.md.
+
+PASS: native GPIO/RMT x calibrated/uncalibrated runs, including invalid configs,
+same-config init, backend/config change rejection, four-sample averaging with
+zero settling, and settling deadline failure without output mutation or ADC reads.
+Existing pulse/checksum, retry/recovery, paired sensor, calibration, scheduling
+and HTTP checks pass. ESP-IDF firmware build and resolved component/C11 checks
+pass; warnings/errors-only logging remains configured. The user confirms the
+pre-refactor sensors work; physical confirmation of this refactor is pending.
+
+
+## Explicit sensor configuration in main.c
+
+main.c now supplies DHT11/light pin and driver configs plus separate read
+budgets to the board adapter. The adapter copies these settings and uses them
+for init/read callbacks instead of hardcoded GPIO27/GPIO34 settings. Capture
+selection still honors menuconfig; defaults preserve the working setup.
+Configuration errors terminate the sampling task with an error log.
+
+PASS: all four native configurations, including forwarding a caller-selected
+eight-sample light average through board sampling and rejecting invalid read
+budgets. Existing shared DHT transaction, retry and calibration checks pass.
+Firmware build and resolved component/C11 checks pass. No board was flashed.

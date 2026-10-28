@@ -79,5 +79,32 @@ void as_test_dht11(void) {
     as_test_dht_fixture(au8Decimal, ast_Pulses);
     assert(as_dht11_decode(ast_Pulses, 83, &f32Temperature, &f32Humidity) == ESP_OK);
     assert(f32Temperature == 23.4f && f32Humidity == 55.5f);
+    /* Exact failing 82-pulse board capture: response LOW was not observed. */
+    AsDht11Pulse ast_HighFirst[] = {
+        {89, 1}, {48, 0}, {23, 1}, {50, 0}, {23, 1}, {53, 0}, {68, 1}, {53, 0},
+        {68, 1}, {53, 0}, {21, 1}, {53, 0}, {24, 1}, {52, 0}, {22, 1}, {52, 0},
+        {23, 1}, {53, 0}, {23, 1}, {51, 0}, {23, 1}, {53, 0}, {23, 1}, {50, 0},
+        {23, 1}, {53, 0}, {21, 1}, {52, 0}, {24, 1}, {52, 0}, {21, 1}, {52, 0},
+        {23, 1}, {53, 0}, {23, 1}, {51, 0}, {23, 1}, {53, 0}, {23, 1}, {51, 0},
+        {68, 1}, {52, 0}, {69, 1}, {52, 0}, {23, 1}, {53, 0}, {21, 1}, {53, 0},
+        {70, 1}, {50, 0}, {23, 1}, {52, 0}, {24, 1}, {50, 0}, {24, 1}, {52, 0},
+        {22, 1}, {52, 0}, {68, 1}, {53, 0}, {23, 1}, {53, 0}, {21, 1}, {53, 0},
+        {23, 1}, {52, 0}, {24, 1}, {50, 0}, {71, 1}, {50, 0}, {24, 1}, {53, 0},
+        {68, 1}, {53, 0}, {21, 1}, {53, 0}, {23, 1}, {52, 0}, {21, 1}, {52, 0},
+        {69, 1}, {52, 0}
+    };
+    assert(as_dht11_decode(ast_HighFirst, 82, &f32Temperature, &f32Humidity) == ESP_OK);
+    assert(f32Temperature == 25.8f && f32Humidity == 48.0f);
+    as_test_dht_reason(ast_HighFirst, 81, "incomplete_response");
+    ast_HighFirst[0].u16DurationUs = 23;
+    as_test_dht_reason(ast_HighFirst, 82, "response_preamble");
+    ast_HighFirst[0].u16DurationUs = 89;
+    ast_HighFirst[81].u8Level = 1;
+    as_test_dht_reason(ast_HighFirst, 82, "response_preamble");
+    ast_HighFirst[81].u8Level = 0;
+    ast_HighFirst[2].u16DurationUs = 48;
+    as_test_dht_reason(ast_HighFirst, 82, "bit_timing");
+    ast_HighFirst[2].u16DurationUs = 68;
+    as_test_dht_reason(ast_HighFirst, 82, "checksum");
     puts("PASS: DHT11 pulse framing, checksum, timing, decimals and selected module ranges");
 }

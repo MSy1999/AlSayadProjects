@@ -1,0 +1,1 @@
+idf_component_register(SRCS "AnalogOutput/AnalogOutput.c" "WifiManager/WifiManager.c" INCLUDE_DIRS "AnalogOutput" "WifiManager" REQUIRES esp_driver_ledc esp_driver_gpio esp_wifi esp_event esp_netif nvs_flash)

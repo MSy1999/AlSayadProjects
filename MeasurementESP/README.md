@@ -2,7 +2,7 @@
 
 ESP-IDF C11 sender for the existing [SmartDisplay protocol](../SmartDisplay/PROTOCOL.md).
 Joins the display AP using DHCP and posts a full temperature/humidity/relative-light
-snapshot every 2000 ms. No router, internet, NTP or synchronized clock is used.
+snapshot every 2500 ms. No router, internet, NTP or synchronized clock is used.
 
 The hardware reference now selects **ESP32-DevKitC V4 / ESP32-WROOM-32E**,
 **KY-015 / DHT11**, and **KY-018 / LDR**. Temperature/humidity use real DHT
@@ -10,8 +10,21 @@ transactions. The user has now connected the light sensor without C1, so light
 acquisition is enabled and logs fresh raw ADC averages every sample during calibration.
 Brightness stays `unavailable` until measured calibration endpoints are enabled.
 The agent did not flash either board. User-reported logs confirm HTTP 202 delivery
-but show DHT failures; sensor acceptance remains incomplete. Actual module revisions
+and valid DHT readings, with intermittent preamble failures; sensor acceptance
+after the decoder fix is confirmed by the user. The sensor-directory refactor
+has software validation; a new board run remains pending. Actual module revisions
 and physical flash capacity still need inspection.
+
+Serial logging defaults to warnings and errors for both the application and
+bootloader. Info messages, including raw inputs and successful HTTP/sensor
+readings, are suppressed. To resume those diagnostics, select Info under
+menuconfig > Component config > Log > Default log verbosity and rebuild.
+
+Reusable sensor APIs and configuration examples are documented in
+[AlSayadLib sensors](../../AlSayad/AlSayadLib/ESP32/sensors/README.md).
+`main/main.c` supplies pins, driver configuration and read timeouts to the board
+adapter, which calls the reusable init/read APIs. Application
+sampling, paired readings, light calibration and HTTP delivery remain here.
 
 ## Hardware decisions and wiring
 
@@ -51,7 +64,7 @@ before connecting IO34. GPIO34 is input-only and uses ADC1, avoiding ADC2/Wi-Fi
 contention. GPIO27 is digital here. No LCD/touch pin assignments are reused.
 
 The shared inventory was checked: it had no DHT or ADC-light drivers. New reusable
-implementations live under `AsDht11` and `AsAnalogLight` in the shared root;
+implementations live under `sensors/DHT11` and `sensors/Light` in the shared root;
 `main/AsMeasurementBoardConfig.*` holds only board registration and paired-result
 coordination. The default diagnostic build captures DHT timing by GPIO polling,
 masking interrupts on the sampling core only during the response (8 ms capture
@@ -116,7 +129,7 @@ Under **MeasurementESP sender** in menuconfig:
 | `AS_SENDER_WIFI_PASSWORD` | `AlSayadRoom` (example; match receiver) |
 | `AS_SENDER_DEVICE_ID` | `measurement-01` |
 | `AS_SENDER_URL` | `http://192.168.4.1/api/v1/measurements` |
-| `AS_SENDER_PERIOD_MS` | `2000` (100-60000) |
+| `AS_SENDER_PERIOD_MS` | `2500` (100-60000); leaves margin above the DHT11's 2000 ms minimum |
 | `AS_SENDER_HTTP_TIMEOUT_MS` | `3000` (100-30000) |
 | `AS_SENDER_SIMULATED` | Disabled |
 | `AS_SENDER_DHT_ENABLED` | Enabled, GPIO27 fixed by reference wiring |
@@ -215,9 +228,10 @@ through the same shared driver and decoder. Confirm `DHT11 GPIO27 capture=GPIO` 
 startup after flashing; the current GPIO version additionally prints `edge-sync=2`.
 GPIO capture releases DATA, switches to input and records the edge stream through
 end-of-frame idle. It locates the response preamble rather than requiring a short
-release-HIGH window to be observed. Only a first captured LOW may be truncated by
-observation latency; the full response HIGH, all forty data bits, checksum and
-sensor ranges are still checked. It restores open-drain host output after capture.
+release-HIGH window to be observed. A first captured LOW may be truncated by
+observation latency. An exactly 82-pulse stream beginning with a 60..100 us
+response HIGH is also accepted when it contains forty complete data pairs and
+a valid trailing LOW. All data timing, checksum and sensor ranges remain checked. It restores open-drain host output after capture.
 Host tests cover finite rise times and first observation after the reply has begun;
 physical success still requires a new board run. `gpio_release_high` belongs to
 the earlier implementation and is absent from the edge-sync=2 capture path.
@@ -280,8 +294,8 @@ through overridable `ALSAYAD_LIB_ROOT`. No second source tree is kept locally.
 | `AsMeasurements` | Reused model, status enums and validation limits unchanged; sender never starts its history store |
 | `AsMeasurementJson` | Added bounded `as_measurement_encode`, keeping decoder signature/behavior and private cJSON; allocation and serialization failures return no body |
 | `AsMeasurementSensors` (new) | Missing reusable fresh-snapshot acquisition, per-metric validation/init recovery and relative-light conversion; model/history module has no driver boundary |
-| `AsDht11` (new) | Native ESP-IDF DHT11 acquisition with selectable GPIO/RMT capture, >=2-second physical attempt spacing, checksum/timing/module-range decoder; no Arduino dependency |
-| `AsAnalogLight` (new) | Missing Wi-Fi-compatible ADC1 acquisition; fresh 16-sample average with bounded waits and retry-safe resource ownership |
+| `DHT11` (`sensors/DHT11`) | Native ESP-IDF DHT11 acquisition with selectable GPIO/RMT capture, >=2-second physical attempt spacing, checksum/timing/module-range decoder; no Arduino dependency |
+| `Light` (`sensors/Light`) | Wi-Fi-compatible ADC1 acquisition; fresh 16-sample average with bounded waits and retry-safe resource ownership |
 | `AsMeasurementSender` (new) | Missing portable retry/freshness/cadence policy; no task scheduler exists in `StateMachine` |
 | `AsWifiStation` (new) | Separate station/DHCP/reconnect owner because legacy `WifiManager` has shared globals, immediate reconnects and CAN Logger/certificate coupling; no legacy API changes |
 | `AsMeasurementHttp` (new) | Configurable bounded fixed-length POST; legacy upload API targets CAN Logger and `AsWifiTransport` is an AP/server receiver |

@@ -35,7 +35,22 @@ static uint64_t as_sender_now_ms(void) {
 static void as_sender_sampling_worker(void* context) {
     (void)context;
     AsMeasurementSensor ast_Sensors[AS_METRIC_COUNT];
-    as_measurement_board_configure(ast_Sensors);
+    /* Application wiring: sensor drivers only need their pin/config and a read budget. */
+    AsMeasurementBoardConfig st_Config = {
+        .st_Dht = AS_DHT11_CONFIG_DEFAULT(GPIO_NUM_27),
+        .st_Light = AS_ANALOG_LIGHT_CONFIG_DEFAULT(34),
+        .u32DhtTimeoutMs = 100,
+        .u32LightTimeoutMs = 100
+    };
+#ifndef CONFIG_AS_SENDER_DHT_GPIO_CAPTURE
+    st_Config.st_Dht.eCapture = AS_DHT11_CAPTURE_RMT;
+#endif
+    esp_err_t configure_error = as_measurement_board_configure(ast_Sensors, &st_Config);
+    if (configure_error != ESP_OK) {
+        ESP_LOGE(pcTag, "sensor configuration: %s", esp_err_to_name(configure_error));
+        vTaskDelete(NULL);
+        return;
+    }
     uint64_t u64DeadlineMs = as_sender_now_ms() + as_measurement_board_startup_ms();
     uint64_t au64Errors[AS_METRIC_COUNT] = {0};
     uint32_t u32Samples = 0;

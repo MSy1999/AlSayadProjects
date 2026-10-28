@@ -14,7 +14,11 @@ config AS_SENDER_URL
 config AS_SENDER_PERIOD_MS
     int "Sampling interval (ms)"
     range 100 60000
-    default 2000
+    default 2500
+    help
+        Use 2500 ms or more with DHT11 to leave scheduling margin above the
+        driver's 2000 ms minimum physical transaction interval. At exactly
+        2000 ms, tick rounding can accumulate waits and exhaust its timeout.
 config AS_SENDER_HTTP_TIMEOUT_MS
     int "HTTP socket timeout (ms)"
     range 100 30000

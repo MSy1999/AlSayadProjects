@@ -1,0 +1,8 @@
+menu "AlSayad remote"
+config AS_DRONE_MAC
+    string "Drone STA MAC"
+    default "00:00:00:00:00:00"
+config AS_PAIR_KEY
+    string "Same unique 32-hex key configured on drone"
+    default "00000000000000000000000000000000"
+endmenu

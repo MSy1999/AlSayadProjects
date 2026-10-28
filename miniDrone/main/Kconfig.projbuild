@@ -1,0 +1,17 @@
+menu "AlSayad MiniDrone"
+config AS_ENABLE_MOTORS
+    bool "Enable two-wire BRUSHED motor MOSFET outputs (hardware verified only)"
+    default n
+config AS_ESPNOW
+    bool "Use paired ESP-NOW controller instead of phone"
+    default n
+config AS_REMOTE_MAC
+    string "Paired controller STA MAC (ESP-NOW mode)"
+    default "00:00:00:00:00:00"
+config AS_ESPNOW_KEY
+    string "ESP-NOW key: exactly 32 hex digits, unique per pair"
+    default "00000000000000000000000000000000"
+config AS_WIFI_PASSWORD
+    string "Drone Wi-Fi password (change before use)"
+    default "AlSayad-change-me"
+endmenu

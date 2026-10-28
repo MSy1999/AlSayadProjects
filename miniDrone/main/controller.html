@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>AlSayad MiniDrone</title>
+<style>body{background:#0b1118;color:#e6edf3;font:18px system-ui;margin:24px}button{padding:16px;margin:8px;background:#f4b740;border:0;border-radius:8px}label{display:block;margin:24px 0}input{width:95%;touch-action:none}#stop{background:#ff4d4d}small{display:block;color:#a0aec0}</style>
+<h1>AlSayad MiniDrone</h1><p id="status">Connecting…</p><small>Bench prototype. Hold ENABLE to send input. Releasing it sends STOP. Motors disabled by default.</small>
+<button id="enable">HOLD ENABLE</button><button id="arm">ARM</button><button id="disarm">DISARM</button><button id="stop">STOP</button>
+<label>Throttle <input id="throttle" type="range" min="0" max="1000" value="0"></label>
+<label>Roll <input id="roll" type="range" min="-1000" max="1000" value="0"></label>
+<label>Pitch <input id="pitch" type="range" min="-1000" max="1000" value="0"></label>
+<label>Yaw <input id="yaw" type="range" min="-1000" max="1000" value="0"></label>
+<script>
+const $=id=>document.getElementById(id);let sequence=0,session=crypto.getRandomValues(new Uint32Array(1))[0]||1,held=false,busy=false,lastAck=0;
+const ws=new WebSocket(`ws://${location.host}/control`);ws.binaryType='arraybuffer';
+ws.onopen=()=>{$('status').textContent='Connected — disarmed';lastAck=performance.now()};ws.onmessage=()=>{busy=false;lastAck=performance.now()};
+ws.onclose=()=>{held=false;$('status').textContent='Disconnected — drone timeout stops motors'};
+function send(kind){if(ws.readyState!==1||ws.bufferedAmount>0)return;const b=new ArrayBuffer(24),v=new DataView(b);v.setUint8(0,65);v.setUint8(1,68);v.setUint8(2,1);v.setUint8(3,kind);v.setUint32(4,session,true);v.setUint32(8,++sequence,true);['throttle','roll','pitch','yaw'].forEach((id,i)=>v.setInt16(12+i*2,Number($(id).value),true));ws.send(b);busy=true;}
+function stop(){held=false;$('throttle').value=0;send(4)}
+$('enable').onpointerdown=e=>{e.preventDefault();$('enable').setPointerCapture(e.pointerId);held=true};$('enable').onpointerup=stop;$('enable').onpointercancel=stop;
+$('arm').onclick=()=>{if(held&&Number($('throttle').value)===0)send(2)};$('disarm').onclick=()=>{send(3);held=false;$('throttle').value=0};$('stop').onclick=stop;
+for(const id of ['roll','pitch','yaw']){ $(id).onpointerup=()=>$(id).value=0;$(id).onpointercancel=()=>$(id).value=0;}
+addEventListener('pagehide',stop);addEventListener('blur',stop);document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});
+setInterval(()=>{if(performance.now()-lastAck>200){if(held)stop();return}if(held&&!busy)send(1)},20);
+setInterval(async()=>{try{const s=await(await fetch('/status')).json();$('status').textContent=`${['DISARMED','ARMED','FAULT — reboot required'][s.state]} | ${s.battery.toFixed(2)} V`;}catch{}},300);
+</script></html>

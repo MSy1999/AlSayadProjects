@@ -13,6 +13,8 @@
 #include "esp_log.h"
 #include <string.h>
 
+static AsMeasurementBoardConfig st_BoardConfig;
+
 #if defined(CONFIG_AS_SENDER_DHT_ENABLED) && !defined(CONFIG_AS_SENDER_SIMULATED)
 static AsDht11 st_Dht;
 static bool bPairAttempted;
@@ -25,13 +27,10 @@ static uint64_t u64NextDhtWarningUs;
 static esp_err_t as_board_dht_init(void* context, uint32_t u32TimeoutMs) {
     (void)context;
     (void)u32TimeoutMs;
-#ifdef CONFIG_AS_SENDER_DHT_GPIO_CAPTURE
-    esp_err_t error = as_dht11_init_gpio(&st_Dht, GPIO_NUM_27);
-#else
-    esp_err_t error = as_dht11_init(&st_Dht, GPIO_NUM_27);
-#endif
+    esp_err_t error = as_dht11_init_config(&st_Dht, &st_BoardConfig.st_Dht);
     if (error != ESP_OK) {
-        ESP_LOGW("AsBoard", "DHT11 init GPIO27: %s", esp_err_to_name(error));
+        ESP_LOGW("AsBoard", "DHT11 init GPIO%d: %s",
+                 (int)st_BoardConfig.st_Dht.ePin, esp_err_to_name(error));
     }
     return error;
 }
@@ -44,8 +43,8 @@ static esp_err_t as_board_dht_pair(uint32_t u32TimeoutMs) {
             uint64_t u64NowUs = (uint64_t)esp_timer_get_time();
             if (u64NowUs >= u64NextDhtWarningUs) {
                 u64NextDhtWarningUs = u64NowUs + 10000000U;
-                ESP_LOGW("AsBoard", "DHT11 GPIO27 transaction: %s; both readings error",
-                         esp_err_to_name(pair_error));
+                ESP_LOGW("AsBoard", "DHT11 GPIO%d transaction: %s; both readings error",
+                         (int)st_BoardConfig.st_Dht.ePin, esp_err_to_name(pair_error));
             }
         } else if (u32DhtSuccesses++ % 5U == 0) {
             ESP_LOGI("AsBoard", "DHT11 temperature=%.1f C humidity=%.1f %%RH",
@@ -80,9 +79,10 @@ static uint32_t u32LightSamples;
 static esp_err_t as_board_light_init(void* context, uint32_t u32TimeoutMs) {
     (void)context;
     (void)u32TimeoutMs;
-    esp_err_t error = as_analog_light_init(&st_Light, 34);
+    esp_err_t error = as_analog_light_init_config(&st_Light, &st_BoardConfig.st_Light);
     if (error != ESP_OK) {
-        ESP_LOGW("AsBoard", "KY-018 ADC init GPIO34: %s", esp_err_to_name(error));
+        ESP_LOGW("AsBoard", "KY-018 ADC init GPIO%ld: %s",
+                 (long)st_BoardConfig.st_Light.i32Pin, esp_err_to_name(error));
     }
     return error;
 }
@@ -100,7 +100,8 @@ static esp_err_t as_board_light_read(void* context, uint32_t u32TimeoutMs, float
     ++u32LightSamples;
 #endif
     if (bLogRaw) {
-        ESP_LOGI("AsBoard", "KY-018 raw average=%.2f (GPIO34 ADC1/6)", (double)f32Raw);
+        ESP_LOGI("AsBoard", "KY-018 raw average=%.2f (GPIO%ld)",
+                 (double)f32Raw, (long)st_BoardConfig.st_Light.i32Pin);
     }
 #ifdef CONFIG_AS_SENDER_LIGHT_CALIBRATED
     return as_measurement_light_convert(f32Raw, CONFIG_AS_SENDER_LIGHT_DARK_RAW,
@@ -143,31 +144,36 @@ uint32_t as_measurement_board_startup_ms(void) {
 #endif
 }
 
-void as_measurement_board_configure(AsMeasurementSensor* pst_Sensors) {
-    if (pst_Sensors == NULL) {
-        return;
+esp_err_t as_measurement_board_configure(AsMeasurementSensor* pst_Sensors,
+                                         const AsMeasurementBoardConfig* pst_Config) {
+    if (pst_Sensors == NULL || pst_Config == NULL
+        || pst_Config->u32DhtTimeoutMs < 50 || pst_Config->u32DhtTimeoutMs > 1000
+        || pst_Config->u32LightTimeoutMs < 10 || pst_Config->u32LightTimeoutMs > 1000) {
+        return ESP_ERR_INVALID_ARG;
     }
+    st_BoardConfig = *pst_Config;
     memset(pst_Sensors, 0, sizeof(*pst_Sensors) * AS_METRIC_COUNT);
 #if defined(CONFIG_AS_SENDER_DHT_ENABLED) && !defined(CONFIG_AS_SENDER_SIMULATED)
     pst_Sensors[AS_METRIC_TEMPERATURE] = (AsMeasurementSensor){.bEnabled = true,
-        .init = as_board_dht_init, .read = as_board_temperature, .u32TimeoutMs = 100};
-#ifdef CONFIG_AS_SENDER_DHT_GPIO_CAPTURE
-    ESP_LOGI("AsBoard", "DHT11 GPIO27 capture=GPIO edge-sync=2; retry transactions each sampling period");
-#else
-    ESP_LOGI("AsBoard", "DHT11 GPIO27 capture=RMT; retry transactions each sampling period");
-#endif
+        .init = as_board_dht_init, .read = as_board_temperature, .u32TimeoutMs = pst_Config->u32DhtTimeoutMs};
+    ESP_LOGI("AsBoard", "DHT11 GPIO%d capture=%s; retry transactions each sampling period",
+        (int)pst_Config->st_Dht.ePin,
+        pst_Config->st_Dht.eCapture == AS_DHT11_CAPTURE_GPIO ? "GPIO edge-sync=2" : "RMT");
     pst_Sensors[AS_METRIC_HUMIDITY] = (AsMeasurementSensor){.bEnabled = true,
-        .init = as_board_dht_init, .read = as_board_humidity, .u32TimeoutMs = 100};
+        .init = as_board_dht_init, .read = as_board_humidity, .u32TimeoutMs = pst_Config->u32DhtTimeoutMs};
 #endif
 #if defined(CONFIG_AS_SENDER_LIGHT_ENABLED) && !defined(CONFIG_AS_SENDER_SIMULATED)
     pst_Sensors[AS_METRIC_LIGHT] = (AsMeasurementSensor){.bEnabled = true,
-        .init = as_board_light_init, .read = as_board_light_read, .u32TimeoutMs = 100};
+        .init = as_board_light_init, .read = as_board_light_read, .u32TimeoutMs = pst_Config->u32LightTimeoutMs};
 #ifdef CONFIG_AS_SENDER_LIGHT_CALIBRATED
-    ESP_LOGI("AsBoard", "KY-018 enabled on GPIO34 with relative-light calibration");
+    ESP_LOGI("AsBoard", "KY-018 enabled on GPIO%ld with relative-light calibration",
+             (long)pst_Config->st_Light.i32Pin);
 #else
-    ESP_LOGI("AsBoard", "KY-018 enabled on GPIO34: raw logging; percent unavailable until calibrated");
+    ESP_LOGI("AsBoard", "KY-018 enabled on GPIO%ld: raw logging; percent unavailable until calibrated",
+             (long)pst_Config->st_Light.i32Pin);
 #endif
 #elif !defined(CONFIG_AS_SENDER_SIMULATED)
     ESP_LOGI("AsBoard", "KY-018 disabled in menuconfig; brightness unavailable");
 #endif
+    return ESP_OK;
 }
