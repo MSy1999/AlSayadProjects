@@ -1,0 +1,202 @@
+{
+  "U1": {
+    "x_mm": 100,
+    "y_mm": 118.5,
+    "rotation_deg": 0
+  },
+  "U2": {
+    "x_mm": 92,
+    "y_mm": 87,
+    "rotation_deg": 90
+  },
+  "J1": {
+    "x_mm": 97.5,
+    "y_mm": 73,
+    "rotation_deg": 90
+  },
+  "SW1": {
+    "x_mm": 97.5,
+    "y_mm": 79,
+    "rotation_deg": 90
+  },
+  "J2": {
+    "x_mm": 112.5,
+    "y_mm": 74,
+    "rotation_deg": 0
+  },
+  "JP1": {
+    "x_mm": 118,
+    "y_mm": 76,
+    "rotation_deg": 90
+  },
+  "J3": {
+    "x_mm": 79,
+    "y_mm": 80,
+    "rotation_deg": 90
+  },
+  "J4": {
+    "x_mm": 131,
+    "y_mm": 80,
+    "rotation_deg": 270
+  },
+  "J5": {
+    "x_mm": 131,
+    "y_mm": 122,
+    "rotation_deg": 270
+  },
+  "J6": {
+    "x_mm": 79,
+    "y_mm": 122,
+    "rotation_deg": 90
+  },
+  "Q1": {
+    "x_mm": 85.5,
+    "y_mm": 91.5,
+    "rotation_deg": 180
+  },
+  "Q2": {
+    "x_mm": 124.5,
+    "y_mm": 91.5,
+    "rotation_deg": 0
+  },
+  "Q3": {
+    "x_mm": 124.5,
+    "y_mm": 110.5,
+    "rotation_deg": 0
+  },
+  "Q4": {
+    "x_mm": 85.5,
+    "y_mm": 110.5,
+    "rotation_deg": 180
+  },
+  "D1": {
+    "x_mm": 78.5,
+    "y_mm": 85,
+    "rotation_deg": 0
+  },
+  "D2": {
+    "x_mm": 131.5,
+    "y_mm": 85,
+    "rotation_deg": 180
+  },
+  "D3": {
+    "x_mm": 131.5,
+    "y_mm": 115,
+    "rotation_deg": 180
+  },
+  "D4": {
+    "x_mm": 78.5,
+    "y_mm": 115,
+    "rotation_deg": 0
+  },
+  "C7": {
+    "x_mm": 81,
+    "y_mm": 76.5,
+    "rotation_deg": 0
+  },
+  "C8": {
+    "x_mm": 129,
+    "y_mm": 76.5,
+    "rotation_deg": 180
+  },
+  "C9": {
+    "x_mm": 126.5,
+    "y_mm": 118.7,
+    "rotation_deg": 180
+  },
+  "C10": {
+    "x_mm": 83.5,
+    "y_mm": 118.7,
+    "rotation_deg": 0
+  },
+  "R1": {
+    "x_mm": 79.5,
+    "y_mm": 96.5,
+    "rotation_deg": 0
+  },
+  "R2": {
+    "x_mm": 130.5,
+    "y_mm": 96.5,
+    "rotation_deg": 180
+  },
+  "R3": {
+    "x_mm": 130.5,
+    "y_mm": 105.5,
+    "rotation_deg": 180
+  },
+  "R4": {
+    "x_mm": 79.5,
+    "y_mm": 105.5,
+    "rotation_deg": 0
+  },
+  "R5": {
+    "x_mm": 79.5,
+    "y_mm": 101.5,
+    "rotation_deg": 0
+  },
+  "R6": {
+    "x_mm": 130.5,
+    "y_mm": 101.5,
+    "rotation_deg": 180
+  },
+  "R7": {
+    "x_mm": 128.5,
+    "y_mm": 126,
+    "rotation_deg": 180
+  },
+  "R8": {
+    "x_mm": 81.5,
+    "y_mm": 126,
+    "rotation_deg": 0
+  },
+  "C1": {
+    "x_mm": 90.8,
+    "y_mm": 79,
+    "rotation_deg": 0
+  },
+  "C2": {
+    "x_mm": 104,
+    "y_mm": 81,
+    "rotation_deg": 0
+  },
+  "C3": {
+    "x_mm": 112.4,
+    "y_mm": 111.5,
+    "rotation_deg": 0
+  },
+  "C4": {
+    "x_mm": 117.7,
+    "y_mm": 112,
+    "rotation_deg": 270
+  },
+  "C5": {
+    "x_mm": 112.4,
+    "y_mm": 118.5,
+    "rotation_deg": 0
+  },
+  "R9": {
+    "x_mm": 116,
+    "y_mm": 98.5,
+    "rotation_deg": 270
+  },
+  "R10": {
+    "x_mm": 116,
+    "y_mm": 88,
+    "rotation_deg": 270
+  },
+  "R11": {
+    "x_mm": 116,
+    "y_mm": 72,
+    "rotation_deg": 0
+  },
+  "R12": {
+    "x_mm": 116,
+    "y_mm": 81,
+    "rotation_deg": 0
+  },
+  "C6": {
+    "x_mm": 113,
+    "y_mm": 127,
+    "rotation_deg": 0
+  }
+}

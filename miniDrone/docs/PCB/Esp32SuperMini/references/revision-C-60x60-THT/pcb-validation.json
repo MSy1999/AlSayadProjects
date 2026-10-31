@@ -1,0 +1,25 @@
+{
+  "board_size_mm": [
+    60,
+    60
+  ],
+  "layers": 2,
+  "thickness_mm": 1.0,
+  "schematic_footprints": 40,
+  "mounting_holes": 4,
+  "assembly": "All carrier components through-hole; existing plug-in modules retained",
+  "plated_component_holes": 106,
+  "module_header_pitch_mm": 2.54,
+  "module_header_drill_mm": 1.0,
+  "track_segments": 204,
+  "vias": 0,
+  "ground_pours": 2,
+  "antenna_keepout_layers": [
+    "F.Cu",
+    "B.Cu"
+  ],
+  "drc_violations": 0,
+  "unconnected_items": 0,
+  "schematic_parity_issues": 0,
+  "status": "Prototype; physical module fit and motor-current ratings require validation."
+}

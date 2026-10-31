@@ -1,0 +1,27 @@
+{
+  "archive": "MiniDrone_RevB_60x60_Prototype_Gerbers.zip",
+  "status": "Prototype quotation package; physical fit and motor current unverified.",
+  "source_board_sha256": "3f42f71b07289ccd82a282ea50293b5c77764561ddf436861169c80914876cc2",
+  "archive_sha256": "df113a8e14991de72605bee77f2edf3334f192ee0b72e6229b55d63b864ea141",
+  "outline_mm": [
+    60.0,
+    60.0
+  ],
+  "layers": 2,
+  "thickness_mm": 1.0,
+  "plated_holes": 59,
+  "nonplated_holes": 4,
+  "files": [
+    "Esp32SuperMini-F_Cu.gtl",
+    "Esp32SuperMini-B_Cu.gbl",
+    "Esp32SuperMini-F_Mask.gts",
+    "Esp32SuperMini-B_Mask.gbs",
+    "Esp32SuperMini-F_Silkscreen.gto",
+    "Esp32SuperMini-B_Silkscreen.gbo",
+    "Esp32SuperMini-Edge_Cuts.gm1",
+    "Esp32SuperMini-PTH.drl",
+    "Esp32SuperMini-NPTH.drl"
+  ],
+  "format": "RS-274X Gerber + metric Excellon; matching absolute origins",
+  "assembly_files_included": false
+}

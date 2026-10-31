@@ -1,41 +1,107 @@
-# AlSayad MiniDrone â€” ESP32-C3
+# AlSayad MiniDrone - motors off and MPU6050 monitor
 
-Bench firmware, not flight-validated. Motors default OFF. Two-wire motors must be identified: ordinary two-wire coreless drone motors are brushed; internally commutated two-wire brushless devices may not support this PWM driver. Never connect motors to GPIO.
+The current firmware reads a real MPU6050/GY-521 using ESP-IDF 6.1 on an
+ESP32-C3 Super Mini. It logs acceleration, angular velocity and temperature
+every 100 ms over USB Serial/JTAG. All four brushed motor driver outputs on
+GPIO6, GPIO7, GPIO10 and GPIO20 are initialized at 0% PWM duty and remain off.
+Existing flight and radio source files remain inactive.
 
-## Hardware
-See [wiring](docs/WIRING.md) and [wiring PNG](docs/images/drone-wiring.png).
-MPU6050 is an explicit example sensor, not confirmed owned hardware. It must be mounted X forward, Y left, Z up; driver maps to flight axes X forward, Y right, Z down. Keep flat and still on boot for 2 seconds. A different IMU requires another adapter implementing imu.h.
+The automatic motor ramp is disabled, and the maximum accepted duty is 0%.
+Motor output initialization runs independently of MPU6050 initialization and
+does not use the `AS_ENABLE_MOTORS` option. It requires active-high transistor drivers for
+two-wire brushed motors; never connect motors directly to GPIOs. See
+[motor wiring](docs/WIRING.md) for the driver and power connections.
 
-## Build
-Use an ESP-IDF 6.1 terminal:
-```
-idf.py set-target esp32c3
-idf.py menuconfig
-idf.py build
-idf.py -p COMx flash monitor
-```
-In AlSayad MiniDrone, change the Wi-Fi password. Leave motor enable OFF for initial tests. Power motors from the battery through correctly rated drivers; never USB. Do not flash with propellers fitted.
-For ESP-NOW select that mode, enter the remote STA MAC and a unique nonzero 16-byte key as 32 hex digits. Configure the same key and drone STA MAC in controller/esp32_remote using its menuconfig. Channel 6 and encrypted unicast are used. Read STA MAC with esptool read-mac or esp_wifi_get_mac(WIFI_IF_STA). No automatic pairing. Controller target is another C3; see remote.c for joystick/button pins. ADC mapping is provisional and requires calibration to actual joystick travel; a spring-centered throttle is unsuitable without a deliberate throttle mapping.
+## Wiring
 
-## Phone
-In default phone mode join AlSayad-MiniDrone and open http://192.168.4.1. Hold ENABLE, leave throttle zero, and press ARM using another finger. Holding ENABLE sends inputs at up to 50 Hz; release sends latched STOP. Arm succeeds only with healthy IMU/battery and hardware motor opt-in. Roll/pitch/yaw sliders return to zero on release. State and battery are polled. This is a bench interface, with no altitude/position hold. Change credentials before enabling outputs. The browser acknowledges packet enqueue only; /status reports actual safety state. TCP buffering and iOS suspension must be tested before flight.
+| MPU6050 / GY-521 | ESP32-C3 |
+| --- | --- |
+| VCC | 3.3 V |
+| GND | GND |
+| SDA | GPIO4 |
+| SCL | GPIO5 |
+| AD0 | GND (address 0x68) |
 
-## Architecture
-components/as_flight has no ESP-IDF dependency: commands, arbitration, angle estimation, cascaded PID and X mixer. as_protocol handles 24-byte little-endian serialization independently of transport. main/inputs.c adapts WebSocket or ESP-NOW into queues; only the main task owns flight state and motor writes. Input uses a one-element latest-value mailbox; discrete events use a bounded queue. Only fresh INPUT packets refresh the control watchdog. Controller/session ownership changes only while disarmed after 500 ms idle. FAULT requires reboot and never auto-rearms.
-components/AlSayadLib contains a project-local radio-only WifiManager and new AnalogOutput LEDC PWM library. See its README for provenance. The external AlSayadLib folder remains unchanged; this is not a linked upstream dependency.
+INT, XDA and XCL are unused. Internal SDA/SCL pull-ups are enabled. External
+pull-ups to **3.3 V** may be required (typically 4.7 kohm on each line,
+accounting for pull-ups already on the breakout). See the
+[ESP-IDF I2C guide](https://docs.espressif.com/projects/esp-idf/en/stable/esp32c3/api-reference/peripherals/i2c.html)
+for pull-up and probe behavior. The [drone wiring](docs/WIRING.md)
+also describes the motor driver connections used by the bench test.
 
-## Limits and verification
-Rate loop target 250 Hz; local dt outside 1â€“12 ms faults. Stale commands >250 ms, failed IMU, ADC failure/low battery, excessive tilt or output errors stop outputs and latch FAULT. Battery thresholds are provisional (3.4 V loaded cutoff), not chemistry-independent. A 100 ms task watchdog resets a stalled controller; MOSFET gate pulldowns are mandatory. Hardware cutoff is needed for stronger protection against firmware hangs. Fixed gains are placeholders and output is capped at 65%; mixer saturation is simply clipped, with conservative PID integral limits, not a fully desaturating allocator. No flight-readiness claim.
+## Build, flash and monitor
 
-Tests in tests/flight_test.c cover packet validation, replay, ownership, arming, timeout, invalid sensors/timing and mixer signs. Build with a native C compiler against components/as_flight/as_flight.c and as_protocol.c, linking libm where needed. First verify motors without propellers, sensor axes, every correction sign, supply stability, and radio-load timing. No hardware tests were performed.
+Initialize the installed ESP-IDF 6.1 environment on this workstation:
 
-## Validation on this workstation
-On 2026-10-28, the ESP-IDF 6.1 build for ESP32-C3 passed and generated `build/miniDrone.bin` (918,528 bytes, 12% app partition space free). Host flight/protocol tests also passed using MSVC. No hardware tests were performed.
-
-For this workstation's EIM installation, initialize PowerShell with its installed profile before building:
 ```powershell
 . C:\Espressif\tools\Microsoft.v6.1.PowerShell_profile.ps1
 $env:PYTHONUTF8 = '1'
+idf.py set-target esp32c3
 idf.py build
+idf.py -p COM4 flash monitor
 ```
-This profile selects the installed Python environment at `C:\Espressif\tools\python\v6.1\venv`. The generic `export.ps1` otherwise looks for a missing environment under `C:\Espressif\python_env`.
+
+COM4 is the detected Espressif USB Serial/JTAG device. If the port changes,
+find it with `python -m serial.tools.list_ports -v` and substitute that port.
+Exit the IDF monitor with Ctrl+]. To monitor the already flashed board:
+
+```powershell
+idf.py -p COM4 monitor
+```
+
+The project already targets ESP32-C3; `set-target` is needed only for a fresh
+configuration or when switching targets. It clears the build and regenerates
+sdkconfig. The PowerShell profile selects the working Python environment at
+`C:\Espressif\tools\python\v6.1\venv`.
+
+## Driver and API
+
+- `main/main.c`: motor outputs held at 0% plus the sensor initialization/retry
+  loop and three ESP_LOGI lines per sample.
+- `main/mpu6050.c`: modern `driver/i2c_master.h` driver at 100 kHz,
+  address probe, WHO_AM_I verification (0x75 must return 0x68), wake-up,
+  all axes enabled, +/-2 g accelerometer and +/-250 degrees/s gyroscope.
+- `main/mpu6050.h`: reusable `mpu6050_init()`, `mpu6050_read()` and
+  `mpu6050_data_t`. Fields `accel_x/y/z` are in g, `gyro_x/y/z` in
+  degrees/s, and `temperature` in degrees Celsius.
+- `main/board.h`: shared pin and sensor address definitions.
+- `main/CMakeLists.txt`: builds the monitor and driver with
+  `esp_driver_i2c`, `esp_driver_ledc`, `esp_common`, `freertos` and `log`.
+
+Each read uses one repeated-start transaction for all 14 bytes beginning at
+0x3B. Signed big-endian 16-bit values are converted using raw / 16384.0 for
+acceleration, raw / 131.0 for angular velocity, and raw / 340.0 + 36.53 for
+temperature. Axes follow the sensor markings without remapping, calibration
+or fusion. Temperature is the sensor die temperature.
+
+Transactions have a 100 ms timeout. Missing devices, unexpected identities
+and transfer failures produce readable errors. Failed reads never print
+measurements or overwrite the caller's output. After failures the application
+waits one second, resets the I2C bus, probes the address and reapplies sensor
+configuration. Bus/device handles are reused across retries. The API owns
+I2C port 0 and must be called from one task or serialized externally.
+
+When stationary, acceleration should be approximately 1 g in total according
+to orientation; gyro readings may have a bias. Repeated detection failures
+call for checking power, common ground, SDA/SCL, AD0 and pull-ups.
+
+## Validation
+
+On 2026-10-29, the ESP-IDF 6.1 ESP32-C3 build passed and generated
+`build/miniDrone.bin` (170,352 bytes, 84% app partition space free).
+Flashing COM4 succeeded with hash verification on an ESP32-C3 revision v0.4.
+The IDF monitor displayed continuous real sensor frames approximately every
+102-103 ms, including positive and negative values. WHO_AM_I verification
+passed before sampling. The monitor was closed after validation.
+
+One actual captured frame:
+
+```text
+I (19028) MPU6050: ACCEL X: -0.05 g | Y: 0.04 g | Z: 1.15 g
+I (19029) MPU6050: GYRO  X: -2.08 °/s | Y: 1.65 °/s | Z: 0.19 °/s
+I (19029) MPU6050: TEMP  19.45 °C
+```
+
+These are uncalibrated measurements. Physical disconnection/reconnection
+recovery has not been tested. The existing 2 MB flash configuration was
+retained; the board reports 4 MB and logs a size warning at boot.

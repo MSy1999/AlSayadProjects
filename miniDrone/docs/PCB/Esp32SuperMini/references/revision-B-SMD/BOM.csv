@@ -1,0 +1,41 @@
+﻿Reference,Value,Footprint,Design note
+J1,BATTERY_1S,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,"3.7 V nominal, 4.2 V full; 400 mAh. Connector/discharge rating TBD."
+SW1,MAIN_SWITCH,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,External switch via header; total motor stall current + logic input current.
+J2,EXTERNAL_5V_BOOST,Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,"Wired module interface: 1 IN+, 2 IN-/GND, 3 OUT+ 5V, 4 OUT-/GND."
+JP1,RUN_POWER_LINK,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,REMOVABLE shunt. REMOVE and switch battery OFF before USB.
+C1,470u / 10V,Capacitor_THT:CP_Radial_D6.3mm_P2.50mm,
+C2,100n / 16V,Capacitor_SMD:C_0805_2012Metric,
+C3,22u / 10V,Capacitor_SMD:C_0805_2012Metric,
+C4,100n / 16V,Capacitor_SMD:C_0805_2012Metric,
+C5,10u / 10V,Capacitor_SMD:C_0805_2012Metric,
+U1,ESP32-C3 Super Mini,MiniDrone:ESP32_C3_SuperMini_THT,Plug-in board; verify physical dimensions before layout.
+U2,GY-521 / MPU6050,Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical,"Verify actual header order VCC,GND,SCL,SDA,XDA,XCL,AD0,INT."
+R9,4k7 DNP,Resistor_SMD:R_0805_2012Metric,Optional: do not populate if suitable 3V3 pull-ups are already on GY-521.
+R10,4k7 DNP,Resistor_SMD:R_0805_2012Metric,Optional: do not populate if suitable 3V3 pull-ups are already on GY-521.
+R11,100k 1%,Resistor_SMD:R_0805_2012Metric,
+R12,100k 1%,Resistor_SMD:R_0805_2012Metric,
+C6,100n / 16V,Capacitor_SMD:C_0805_2012Metric,
+Q1,BC337,Package_TO_SOT_THT:TO-92_Inline_Wide,"Assumed onsemi pinout 1 C, 2 B, 3 E. Verify your transistor supplier."
+R1,330R*,Resistor_SMD:R_0805_2012Metric,PROVISIONAL base resistor; verify motor startup current and transistor saturation.
+R5,10k,Resistor_SMD:R_0805_2012Metric,
+J3,M1_MOTOR,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,"Motor + pin1, motor - pin2. Connector current rating TBD."
+D1,SS14*,Diode_SMD:D_SMA,Provisional 1A Schottky; check current/thermal ratings.
+C7,100n,Capacitor_SMD:C_0805_2012Metric,"16V ceramic, fit directly at motor terminals."
+Q2,BC337,Package_TO_SOT_THT:TO-92_Inline_Wide,"Assumed onsemi pinout 1 C, 2 B, 3 E. Verify your transistor supplier."
+R2,330R*,Resistor_SMD:R_0805_2012Metric,PROVISIONAL base resistor; verify motor startup current and transistor saturation.
+R6,10k,Resistor_SMD:R_0805_2012Metric,
+J4,M2_MOTOR,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,"Motor + pin1, motor - pin2. Connector current rating TBD."
+D2,SS14*,Diode_SMD:D_SMA,Provisional 1A Schottky; check current/thermal ratings.
+C8,100n,Capacitor_SMD:C_0805_2012Metric,"16V ceramic, fit directly at motor terminals."
+Q3,BC337,Package_TO_SOT_THT:TO-92_Inline_Wide,"Assumed onsemi pinout 1 C, 2 B, 3 E. Verify your transistor supplier."
+R3,330R*,Resistor_SMD:R_0805_2012Metric,PROVISIONAL base resistor; verify motor startup current and transistor saturation.
+R7,10k,Resistor_SMD:R_0805_2012Metric,
+J5,M3_MOTOR,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,"Motor + pin1, motor - pin2. Connector current rating TBD."
+D3,SS14*,Diode_SMD:D_SMA,Provisional 1A Schottky; check current/thermal ratings.
+C9,100n,Capacitor_SMD:C_0805_2012Metric,"16V ceramic, fit directly at motor terminals."
+Q4,BC337,Package_TO_SOT_THT:TO-92_Inline_Wide,"Assumed onsemi pinout 1 C, 2 B, 3 E. Verify your transistor supplier."
+R4,330R*,Resistor_SMD:R_0805_2012Metric,PROVISIONAL base resistor; verify motor startup current and transistor saturation.
+R8,10k,Resistor_SMD:R_0805_2012Metric,
+J6,M4_MOTOR,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,"Motor + pin1, motor - pin2. Connector current rating TBD."
+D4,SS14*,Diode_SMD:D_SMA,Provisional 1A Schottky; check current/thermal ratings.
+C10,100n,Capacitor_SMD:C_0805_2012Metric,"16V ceramic, fit directly at motor terminals."
